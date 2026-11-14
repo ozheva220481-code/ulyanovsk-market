@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Аналитика вторичного рынка — Ульяновск</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    :root{font-family:Inter,Arial,sans-serif;color:#172033;background:#f4f6fa}
+    *{box-sizing:border-box} body{margin:0} .wrap{max-width:1120px;margin:0 auto;padding:28px 18px}
+    header{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:24px}
+    h1{font-size:25px;margin:0 0 6px} .muted{color:#687386;font-size:13px}
+    .panel{background:#fff;border:1px solid #e3e8f0;border-radius:14px;padding:20px;margin-bottom:16px;box-shadow:0 2px 8px #14213d08}
+    .login{max-width:430px;margin:8vh auto}.field{display:flex;flex-direction:column;gap:6px;margin:12px 0}
+    label{font-size:13px;color:#4d596b} input,select{width:100%;padding:11px 12px;border:1px solid #ccd4e0;border-radius:8px;background:white;font:inherit}
+    button{border:0;border-radius:8px;padding:11px 16px;background:#183b68;color:#fff;font-weight:600;cursor:pointer}
+    button.secondary{background:#e9eef5;color:#24364d} button:disabled{opacity:.5;cursor:wait}
+    .grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+    .metric{font-size:26px;font-weight:700;margin-top:8px}.metric small{font-size:13px;font-weight:400;color:#687386}
+    .filters{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;align-items:end}
+    .actions{display:flex;gap:8px;flex-wrap:wrap}.status{margin-top:12px;font-size:13px;color:#687386}
+    .error{color:#a32121}.success{color:#167347}
+    .table-wrap{overflow:auto}table{width:100%;border-collapse:collapse;font-size:14px;white-space:nowrap}
+    th,td{text-align:left;padding:12px;border-bottom:1px solid #edf0f4}th{color:#596579;font-weight:600;background:#fafbfd}
+    .tag{display:inline-block;background:#eef2f7;padding:4px 8px;border-radius:20px;font-size:12px}
+    .note{font-size:12px;line-height:1.5;color:#6b7483}
+    @media(max-width:760px){.grid{grid-template-columns:1fr}.filters{grid-template-columns:1fr 1fr}header{align-items:flex-start;flex-direction:column}}
+    @media(max-width:460px){.filters{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <section id="loginView" class="panel login">
+    <h1>Аналитика вторичного рынка</h1>
+    <p class="muted">Ульяновск · закрытый доступ</p>
+    <form id="loginForm">
+      <div class="field"><label for="email">Email</label><input id="email" type="email" autocomplete="username" required></div>
+      <div class="field"><label for="password">Пароль</label><input id="password" type="password" autocomplete="current-password" required></div>
+      <button id="loginButton" type="submit">Войти</button>
+    </form>
+    <div id="loginStatus" class="status" role="status"></div>
+  </section>
+
+  <main id="appView" hidden>
+    <header>
+      <div><h1>Аналитика вторичного рынка жилья</h1><div class="muted">Ульяновск · рабочая панель</div></div>
+      <button class="secondary" id="logoutButton">Выйти</button>
+    </header>
+    <section class="grid">
+      <div class="panel"><div class="muted">Медиана за последний квартал</div><div class="metric" id="latestMedian">—</div><div class="muted" id="latestPeriod">—</div></div>
+      <div class="panel"><div class="muted">Количество наблюдений в последнем квартале</div><div class="metric" id="latestCount">—</div><div class="muted">Источник: агрегированные данные</div></div>
+      <div class="panel"><div class="muted">Кварталов в базе</div><div class="metric" id="quarterCount">—</div><div class="muted">Загруженные записи</div></div>
+    </section>
+    <section class="panel">
+      <h2 style="font-size:17px;margin:0 0 14px">Фильтры</h2>
+      <div class="filters">
+        <div class="field"><label for="fromPeriod">Период с</label><select id="fromPeriod"></select></div>
+        <div class="field"><label for="toPeriod">Период по</label><select id="toPeriod"></select></div>
+        <div class="field"><label for="locationFilter">Локация</label><select id="locationFilter"><option value="">Все локации</option></select></div>
+        <div class="field"><label for="typeFilter">Тип записи</label><select id="typeFilter"><option value="">Все типы</option><option value="grouped">Групповые / агрегированные</option><option value="individual">Индивидуальные</option></select></div>
+      </div>
+      <div class="actions">
+        <button id="applyFilters">Применить</button>
+        <button class="secondary" id="resetFilters">Сбросить</button>
+        <button class="secondary" id="exportCsv">Скачать CSV</button>
+      </div>
+      <div id="dataStatus" class="status" role="status"></div>
+    </section>
+    <section class="panel">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
+        <h2 style="font-size:17px;margin:0">Квартальные показатели</h2><span class="tag" id="rowsLabel">0 записей</span>
+      </div>
+      <div class="table-wrap" style="margin-top:12px">
+        <table>
+          <thead><tr><th>Период</th><th>Локация</th><th>Сегмент</th><th>Медиана, ₽/м²</th><th>Q1, ₽/м²</th><th>Q3, ₽/м²</th><th>Наблюдения</th><th>Тип</th><th>Источник</th></tr></thead>
+          <tbody id="tableBody"><tr><td colspan="9">Загрузка…</td></tr></tbody>
+        </table>
+      </div>
+      <p class="note" style="margin-top:14px">Важно: текущий набор содержит квартальные агрегаты, а не карточки отдельных договоров. Значение «наблюдения» не следует автоматически трактовать как число уникальных договоров. Адреса и кадастровые номера отсутствуют в этом наборе. Не используйте эти показатели как цены конкретных объектов.</p>
+    </section>
+    <p class="note">Данные загружаются из защищённой таблицы Supabase после входа. Доступ к строкам ограничивается политиками Row Level Security (RLS).</p>
+  </main>
+</div>
+<script>
+(() => {
+  const SUPABASE_URL = "https://qocpumoehhhmaxnguiaq.supabase.co";
+  const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_7PdhLpRWoF-vso75X7qT0Q_yWHe4XNZ";
+  const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+  let allRows = [], visibleRows = [];
+  const $ = id => document.getElementById(id);
+  const money = n => n == null ? "—" : new Intl.NumberFormat("ru-RU",{maximumFractionDigits:0}).format(n);
+  const status = (el,msg,kind="") => { el.textContent=msg; el.className="status "+kind; };
+  function showLoggedIn(on) { $("loginView").hidden=on; $("appView").hidden=!on; }
+  function csvCell(v) { const s = v == null ? "" : String(v); return '"' + s.replaceAll('"','""') + '"'; }
+
+  async function loadRows() {
+    status($("dataStatus"),"Загружаем данные…");
+    const {data,error} = await client.from("market_quarters")
+      .select("period_key,period_label,location,property_type,median_sqm,q1_sqm,q3_sqm,deals_count,record_type,source_name")
+      .order("period_key",{ascending:true});
+    if(error) { status($("dataStatus"),"Не удалось загрузить данные: "+error.message,"error"); return; }
+    allRows = data || [];
+    if(!allRows.length) { status($("dataStatus"),"Таблица доступна, но записей пока нет.","error"); return; }
+    const periods = [...new Map(allRows.map(r=>[r.period_key,{key:r.period_key,label:r.period_label}])).values()];
+    for(const id of ["fromPeriod","toPeriod"]) {
+      $(id).innerHTML = periods.map(p=>`<option value="${p.key}">${p.label}</option>`).join("");
+    }
+    $("fromPeriod").value=periods[0].key;
+    $("toPeriod").value=periods[periods.length-1].key;
+    const locations=[...new Set(allRows.map(r=>r.location).filter(Boolean))];
+    $("locationFilter").innerHTML='<option value="">Все локации</option>'+locations.map(x=>`<option value="${escapeHtml(x)}">${escapeHtml(x)}</option>`).join("");
+    const latest=allRows[allRows.length-1];
+    $("latestMedian").textContent=money(latest.median_sqm)+" ₽/м²";
+    $("latestPeriod").textContent=latest.period_label;
+    $("latestCount").textContent=money(latest.deals_count);
+    $("quarterCount").textContent=allRows.length;
+    applyFilters();
+  }
+  function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+  function applyFilters() {
+    const from=$("fromPeriod").value, to=$("toPeriod").value, loc=$("locationFilter").value, type=$("typeFilter").value;
+    visibleRows=allRows.filter(r=>(!from||r.period_key>=from)&&(!to||r.period_key<=to)&&(!loc||r.location===loc)&&(!type||r.record_type===type));
+    $("tableBody").innerHTML=visibleRows.length ? visibleRows.map(r=>`<tr>
+      <td>${escapeHtml(r.period_label)}</td><td>${escapeHtml(r.location||"—")}</td><td>${escapeHtml(r.property_type||"—")}</td>
+      <td>${money(r.median_sqm)}</td><td>${money(r.q1_sqm)}</td><td>${money(r.q3_sqm)}</td><td>${money(r.deals_count)}</td>
+      <td>${r.record_type==="individual"?"Индивидуальная":"Агрегированная"}</td><td>${escapeHtml(r.source_name||"—")}</td></tr>`).join("") : '<tr><td colspan="9">По выбранным фильтрам записей нет</td></tr>';
+    $("rowsLabel").textContent=visibleRows.length+" записей";
+    status($("dataStatus"),"Показано записей: "+visibleRows.length,"success");
+  }
+  $("loginForm").addEventListener("submit",async e=>{
+    e.preventDefault(); $("loginButton").disabled=true;
+    status($("loginStatus"),"Проверяем данные входа…");
+    const {error}=await client.auth.signInWithPassword({email:$("email").value.trim(),password:$("password").value});
+    $("loginButton").disabled=false;
+    if(error){status($("loginStatus"),"Не удалось войти. Проверьте email и пароль.","error");return;}
+    status($("loginStatus"),"Вход выполнен.","success");
+  });
+  $("logoutButton").addEventListener("click",async()=>{await client.auth.signOut();});
+  $("applyFilters").addEventListener("click",applyFilters);
+  $("resetFilters").addEventListener("click",()=>{
+    if(allRows.length){$("fromPeriod").selectedIndex=0;$("toPeriod").selectedIndex=$("toPeriod").options.length-1;}
+    $("locationFilter").value="";$("typeFilter").value="";applyFilters();
+  });
+  $("exportCsv").addEventListener("click",()=>{
+    const headers=["period_key","period_label","location","property_type","median_sqm","q1_sqm","q3_sqm","deals_count","record_type","source_name"];
+    const lines=[headers.join(","),...visibleRows.map(r=>headers.map(h=>csvCell(r[h])).join(","))];
+    const blob=new Blob(["\ufeff"+lines.join("\r\n")],{type:"text/csv;charset=utf-8;"});
+    const url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download="ulyanovsk_market_filtered.csv";a.click();URL.revokeObjectURL(url);
+  });
+  client.auth.onAuthStateChange((_event,session)=>{
+    showLoggedIn(!!session);
+    if(session && !allRows.length) loadRows();
+    if(!session) {allRows=[];visibleRows=[];}
+  });
+  client.auth.getSession().then(({data})=>{
+    showLoggedIn(!!data.session);
+    if(data.session) loadRows();
+  });
+})();
+</script>
+</body>
+</html>
