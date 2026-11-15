@@ -98,7 +98,7 @@ th,td{text-align:left;padding:11px;border-bottom:1px solid #edf0f4}th{background
 (()=>{
 const URL="https://qocpumoehhhmaxnguiaq.supabase.co";
 const KEY="sb_publishable_7PdhLpRWoF-vso75X7qT0Q_yWHe4XNZ";
-const sb=window.supabase.createClient(SUPABASE_URL,KEY);let rows=[],shown=[];
+const sb=window.supabase.createClient(URL,KEY);let rows=[],shown=[];
 const $=x=>document.getElementById(x),fmt=n=>n==null?"—":new Intl.NumberFormat("ru-RU").format(n);
 const say=(id,msg,cls="")=>{$(id).textContent=msg;$(id).className="status "+cls};
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
