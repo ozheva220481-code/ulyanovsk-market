@@ -17,21 +17,6 @@ button.secondary{background:#e9eef5;color:#26364d}.filters{display:grid;grid-tem
 th,td{text-align:left;padding:11px;border-bottom:1px solid #edf0f4}th{background:#fafbfd;color:#596579}
 .status{font-size:13px;margin-top:10px}.error{color:#a32121}.ok{color:#167347}
 .tag{background:#eef2f7;border-radius:20px;padding:4px 8px;font-size:12px}
-
-.district-layout{display:grid;grid-template-columns:300px minmax(0,1fr);gap:18px;align-items:start}
-.district-scheme{background:#f7f9fc;border:1px solid #e5eaf1;border-radius:12px;padding:14px}
-.district-scheme svg{width:100%;height:auto;display:block}
-.district-scheme .district-shape{fill:#e8eef6;stroke:#718096;stroke-width:2}
-.district-scheme text{font:600 12px Arial,sans-serif;fill:#24344b;text-anchor:middle}
-.district-scheme .scheme-note{font:11px Arial,sans-serif;fill:#687386}
-.district-table{width:100%;border-collapse:collapse;font-size:13px}
-.district-table th,.district-table td{padding:10px;border-bottom:1px solid #edf0f4;text-align:left}
-.district-table th{color:#596579;background:#fafbfd}
-.district-bar{height:9px;background:#e8edf4;border-radius:8px;overflow:hidden;min-width:100px;margin-top:5px}
-.district-bar span{display:block;height:100%;background:#315f91;border-radius:8px}
-.district-empty{padding:16px;border:1px dashed #cbd4e0;border-radius:10px;color:#687386;font-size:13px;line-height:1.5}
-@media(max-width:760px){.district-layout{grid-template-columns:1fr}}
-
 @media(max-width:760px){.filters{grid-template-columns:repeat(2,1fr)}.grid{grid-template-columns:1fr}}
 @media(max-width:450px){.filters{grid-template-columns:1fr}}
 </style></head>
@@ -56,42 +41,24 @@ th,td{text-align:left;padding:11px;border-bottom:1px solid #edf0f4}th{background
 <div class="field"><label>Период с</label><select id="from"></select></div>
 <div class="field"><label>Период по</label><select id="to"></select></div>
 <div class="field"><label>Район</label><select id="district"><option value="">Все районы</option></select></div>
+<div class="field"><label>Количество комнат</label><select id="rooms"><option value="">Все варианты</option></select></div>
+<div class="field"><label>Тип квартиры</label><select id="apartment"><option value="">Все типы</option></select></div>
 <div class="field"><label>Тип дома</label><select id="house"><option value="">Все типы</option></select></div>
 <div class="field"><label>Материал стен</label><select id="wall"><option value="">Все материалы</option></select></div>
-<div class="field"><label>Площадь квартиры</label><select id="area"><option value="">Любая площадь</option></select></div>
-<div class="field"><label>Этаж / этажность</label><select id="floor"><option value="">Все варианты</option></select></div>
+<div class="field"><label>Площадь от, м²</label><input id="areaMin" type="number" min="0" step="0.1" placeholder="Любая"></div>
+<div class="field"><label>Площадь до, м²</label><input id="areaMax" type="number" min="0" step="0.1" placeholder="Любая"></div>
+<div class="field"><label>Этаж</label><select id="floor"><option value="">Любой этаж</option></select></div>
+<div class="field"><label>Этажность дома</label><select id="floors"><option value="">Любая</option></select></div>
 <div class="field"><label>Тип записи</label><select id="record"><option value="">Все типы</option><option value="grouped">Агрегированная</option><option value="individual">Индивидуальная</option></select></div>
 </div>
 <div class="actions"><button id="apply">Применить фильтры</button><button class="secondary" id="reset">Сбросить</button><button class="secondary" id="csv">Скачать CSV</button></div>
 <div id="dataStatus" class="status"></div>
 </section>
-<section class="panel" id="districtAnalytics">
-<h2>Аналитика по районам</h2>
-<p class="note">Показатели рассчитываются только по отдельным районным агрегатам из базы. Городская медиана не переносится на районы. Схема ниже показывает ориентировочное взаимное расположение районов, а не официальные границы.</p>
-<div class="district-layout">
- <div class="district-scheme">
-  <svg viewBox="0 0 300 260" role="img" aria-label="Схема расположения четырёх районов Ульяновска">
-   <path class="district-shape" d="M18 63 L106 34 L145 77 L113 132 L34 126 Z"/><text x="79" y="82">Засвияжский</text>
-   <path class="district-shape" d="M106 34 L202 22 L210 88 L145 107 L145 77 Z"/><text x="158" y="57">Ленинский</text>
-   <path class="district-shape" d="M34 126 L113 132 L145 107 L154 190 L72 218 L20 178 Z"/><text x="87" y="166">Железнодорожный</text>
-   <path d="M222 20 Q238 78 220 130 Q205 182 231 236" fill="none" stroke="#8bb5d4" stroke-width="12" stroke-linecap="round"/><text x="255" y="126" transform="rotate(90 255 126)" class="scheme-note">Волга</text>
-   <path class="district-shape" d="M206 22 L281 36 L280 218 L231 236 Q205 182 220 130 Q238 78 206 22 Z"/><text x="249" y="112">Заволжский</text>
-   <text x="150" y="250" class="scheme-note">Схема, не в масштабе</text>
-  </svg>
- </div>
- <div>
-  <div id="districtSummary" class="district-empty">Районных данных пока нет. Сейчас в базе находятся квартальные агрегаты по Ульяновску в целом.</div>
-  <div class="tablewrap" id="districtTableWrap" hidden>
-   <table class="district-table"><thead><tr><th>Район</th><th>Последний период</th><th>Медиана, ₽/м²</th><th>Наблюдения</th><th>Источник</th></tr></thead><tbody id="districtTbody"></tbody></table>
-  </div>
- </div>
-</div>
-</section>
 <section class="panel">
 <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap"><h2>Результаты</h2><span class="tag" id="rowsLabel">0 записей</span></div>
 <div class="tablewrap"><table><thead><tr>
-<th>Период</th><th>Район</th><th>Тип дома</th><th>Материал стен</th><th>Площадь</th><th>Этажность</th><th>Медиана, ₽/м²</th><th>Q1</th><th>Q3</th><th>Наблюдения</th><th>Тип записи</th><th>Источник</th>
-</tr></thead><tbody id="tbody"><tr><td colspan="12">Загрузка…</td></tr></tbody></table></div>
+<th>Период</th><th>Район</th><th>Тип дома</th><th>Материал стен</th><th>Площадь, м²</th><th>Этаж</th><th>Этажность</th><th>Комнат</th><th>Тип квартиры</th><th>Медиана, ₽/м²</th><th>Q1</th><th>Q3</th><th>Наблюдения</th><th>Тип записи</th><th>Источник</th>
+</tr></thead><tbody id="tbody"><tr><td colspan="15">Загрузка…</td></tr></tbody></table></div>
 <p class="note" style="margin-top:14px">Текущие записи — квартальные агрегаты по городу. Поля района, типа дома, материала стен, площади и этажности будут пустыми, пока не загружены подтверждённые данные с такими разрезами. Медиана городского агрегата не является медианой конкретного района или сегмента. Число наблюдений не следует автоматически считать числом уникальных договоров.</p>
 </section></main></div>
 <script>
@@ -103,61 +70,40 @@ const $=x=>document.getElementById(x),fmt=n=>n==null?"—":new Intl.NumberFormat
 const say=(id,msg,cls="")=>{$(id).textContent=msg;$(id).className="status "+cls};
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 function authView(on){$("login").hidden=on;$("app").hidden=!on}
-function fillSelect(id,field,first){const vals=[...new Set(rows.map(r=>r[field]).filter(Boolean))].sort();$(id).innerHTML=`<option value="">${first}</option>`+vals.map(v=>`<option value="${esc(v)}">${esc(v)}</option>`).join("")}
+function fillSelect(id,field,first){const vals=[...new Set(rows.map(r=>r[field]).filter(v=>v!==null&&v!==undefined&&v!==""))].sort((a,b)=>String(a).localeCompare(String(b),"ru",{numeric:true}));$(id).innerHTML=`<option value="">${vals.length?first:"Нет данных в источнике"}</option>`+vals.map(v=>`<option value="${esc(v)}">${esc(v)}</option>`).join("");$(id).disabled=vals.length===0}
 async function load(){
 say("dataStatus","Загружаем записи…");
-const {data,error}=await sb.from("market_quarters").select("period_key,period_label,location,district,property_type,house_type,wall_material,area_group,floor_group,median_sqm,q1_sqm,q3_sqm,deals_count,record_type,source_name").order("period_key");
+const {data,error}=await sb.from("market_quarters").select("period_key,period_label,location,district,property_type,apartment_type,rooms_count,house_type,wall_material,area_sqm,floor,floors_total,median_sqm,q1_sqm,q3_sqm,deals_count,independent_obs,rel_error,record_type,source_name").order("period_key");
 if(error){say("dataStatus","Ошибка загрузки: "+error.message,"error");return}
 rows=data||[];if(!rows.length){say("dataStatus","Таблица пуста.","error");return}
 const periods=[...new Map(rows.map(r=>[r.period_key,{key:r.period_key,label:r.period_label}])).values()];
 ["from","to"].forEach(id=>$(id).innerHTML=periods.map(p=>`<option value="${p.key}">${esc(p.label)}</option>`).join(""));
 $("from").value=periods[0].key;$("to").value=periods.at(-1).key;
-fillSelect("district","district","Все районы");fillSelect("house","house_type","Все типы");fillSelect("wall","wall_material","Все материалы");fillSelect("area","area_group","Любая площадь");fillSelect("floor","floor_group","Все варианты");
+fillSelect("district","district","Все районы");fillSelect("rooms","rooms_count","Все варианты");fillSelect("apartment","apartment_type","Все типы");fillSelect("house","house_type","Все типы");fillSelect("wall","wall_material","Все материалы");fillSelect("floor","floor","Любой этаж");fillSelect("floors","floors_total","Любая этажность");
 const last=rows.at(-1);$("lastMedian").textContent=fmt(last.median_sqm)+" ₽/м²";$("lastPeriod").textContent=last.period_label;$("lastCount").textContent=fmt(last.deals_count);$("rowCount").textContent=rows.length;
 filter();
 }
-function renderDistrictAnalytics(){
- const f=$("from").value,t=$("to").value;
- const districtNames=["Заволжский","Засвияжский","Железнодорожный","Ленинский"];
- // District-level rows only: exclude records already broken down by other segment fields.
- const districtRows=rows.filter(r=>r.district && (!f||r.period_key>=f) && (!t||r.period_key<=t) &&
-   !r.house_type && !r.wall_material && !r.area_group && !r.floor_group &&
-   (!$("record").value || r.record_type===$("record").value));
- const latest={};
- districtRows.sort((a,b)=>a.period_key.localeCompare(b.period_key)).forEach(r=>{latest[r.district]=r});
- const available=districtNames.map(name=>({name,row:latest[name]})).filter(x=>x.row);
- if(!available.length){
-  $("districtSummary").hidden=false;$("districtTableWrap").hidden=true;
-  $("districtSummary").textContent="Нет подтверждённых районных агрегатов за выбранный период. Городские квартальные данные не позволяют определить медиану отдельно по районам. После загрузки районных записей таблица и сравнение появятся автоматически.";
-  return;
- }
- $("districtSummary").hidden=true;$("districtTableWrap").hidden=false;
- const max=Math.max(...available.map(x=>Number(x.row.median_sqm)||0),1);
- $("districtTbody").innerHTML=districtNames.map(name=>{
-  const r=latest[name];
-  if(!r)return `<tr><td>${esc(name)}</td><td colspan="4">Нет данных</td></tr>`;
-  const width=Math.max(0,Math.min(100,(Number(r.median_sqm)||0)/max*100));
-  return `<tr><td>${esc(name)}</td><td>${esc(r.period_label||r.period_key)}</td><td>${fmt(r.median_sqm)}<div class="district-bar"><span style="width:${width}%"></span></div></td><td>${fmt(r.deals_count)}</td><td>${esc(r.source_name||"—")}</td></tr>`;
- }).join("");
-}
 function filter(){
- const f=$("from").value,t=$("to").value;
- renderDistrictAnalytics();
+const f=$("from").value,t=$("to").value;
 shown=rows.filter(r=>(!f||r.period_key>=f)&&(!t||r.period_key<=t)&&
 (!$("district").value||r.district===$("district").value)&&
+(!$("rooms").value||String(r.rooms_count)===$("rooms").value)&&
+(!$("apartment").value||r.apartment_type===$("apartment").value)&&
 (!$("house").value||r.house_type===$("house").value)&&
 (!$("wall").value||r.wall_material===$("wall").value)&&
-(!$("area").value||r.area_group===$("area").value)&&
-(!$("floor").value||r.floor_group===$("floor").value)&&
+(!$("areaMin").value||Number(r.area_sqm)>=Number($("areaMin").value))&&
+(!$("areaMax").value||Number(r.area_sqm)<=Number($("areaMax").value))&&
+(!$("floor").value||String(r.floor)===$("floor").value)&&
+(!$("floors").value||String(r.floors_total)===$("floors").value)&&
 (!$("record").value||r.record_type===$("record").value));
 $("tbody").innerHTML=shown.length?shown.map(r=>`<tr>
-<td>${esc(r.period_label)}</td><td>${esc(r.district||"—")}</td><td>${esc(r.house_type||r.property_type||"—")}</td><td>${esc(r.wall_material||"—")}</td><td>${esc(r.area_group||"—")}</td><td>${esc(r.floor_group||"—")}</td><td>${fmt(r.median_sqm)}</td><td>${fmt(r.q1_sqm)}</td><td>${fmt(r.q3_sqm)}</td><td>${fmt(r.deals_count)}</td><td>${r.record_type==="individual"?"Индивидуальная":"Агрегированная"}</td><td>${esc(r.source_name||"—")}</td></tr>`).join(""):'<tr><td colspan="12">По выбранным фильтрам записей нет</td></tr>';
+<td>${esc(r.period_label)}</td><td>${esc(r.district||"—")}</td><td>${esc(r.house_type||r.property_type||"—")}</td><td>${esc(r.wall_material||"—")}</td><td>${fmt(r.area_sqm)}</td><td>${fmt(r.floor)}</td><td>${fmt(r.floors_total)}</td><td>${fmt(r.rooms_count)}</td><td>${esc(r.apartment_type||"—")}</td><td>${fmt(r.median_sqm)}</td><td>${fmt(r.q1_sqm)}</td><td>${fmt(r.q3_sqm)}</td><td>${fmt(r.deals_count)}</td><td>${r.record_type==="individual"?"Индивидуальная":"Агрегированная"}</td><td>${esc(r.source_name||"—")}</td></tr>`).join(""):'<tr><td colspan="15">По выбранным фильтрам записей нет</td></tr>';
 $("rowsLabel").textContent=shown.length+" записей";say("dataStatus","Показано записей: "+shown.length,"ok");
 }
 $("loginForm").addEventListener("submit",async e=>{e.preventDefault();$("loginBtn").disabled=true;say("loginStatus","Проверка входа…");const {error}=await sb.auth.signInWithPassword({email:$("email").value.trim(),password:$("password").value});$("loginBtn").disabled=false;if(error){say("loginStatus","Не удалось войти. Проверьте email и пароль.","error")}else{say("loginStatus","Вход выполнен.","ok")}});
 $("logout").onclick=()=>sb.auth.signOut();$("apply").onclick=filter;
-$("reset").onclick=()=>{if(rows.length){$("from").selectedIndex=0;$("to").selectedIndex=$("to").options.length-1}["district","house","wall","area","floor","record"].forEach(id=>$(id).value="");filter()};
-$("csv").onclick=()=>{const cols=["period_key","period_label","location","district","property_type","house_type","wall_material","area_group","floor_group","median_sqm","q1_sqm","q3_sqm","deals_count","record_type","source_name"];const cell=v=>'"'+String(v??"").replaceAll('"','""')+'"';const csv=[cols.join(","),...shown.map(r=>cols.map(c=>cell(r[c])).join(","))].join("\r\n");const a=document.createElement("a"),u=window.URL.createObjectURL(new Blob(["\ufeff"+csv],{type:"text/csv;charset=utf-8"}));a.href=u;a.download="ulyanovsk_market_filtered.csv";a.click();window.URL.revokeObjectURL(u)};
+$("reset").onclick=()=>{if(rows.length){$("from").selectedIndex=0;$("to").selectedIndex=$("to").options.length-1}["district","rooms","apartment","house","wall","floor","floors","record"].forEach(id=>$(id).value="");["areaMin","areaMax"].forEach(id=>$(id).value="");filter()};
+$("csv").onclick=()=>{const cols=["period_key","period_label","location","district","property_type","apartment_type","rooms_count","house_type","wall_material","area_sqm","floor","floors_total","median_sqm","q1_sqm","q3_sqm","deals_count","independent_obs","rel_error","record_type","source_name"];const cell=v=>'"'+String(v??"").replaceAll('"','""')+'"';const csv=[cols.join(","),...shown.map(r=>cols.map(c=>cell(r[c])).join(","))].join("\r\n");const a=document.createElement("a"),u=URL.createObjectURL(new Blob(["\ufeff"+csv],{type:"text/csv;charset=utf-8"}));a.href=u;a.download="ulyanovsk_market_filtered.csv";a.click();URL.revokeObjectURL(u)};
 sb.auth.onAuthStateChange((_e,s)=>{authView(!!s);if(s&&!rows.length)load();if(!s)rows=[]});
 sb.auth.getSession().then(({data})=>{authView(!!data.session);if(data.session)load()});
 })();
